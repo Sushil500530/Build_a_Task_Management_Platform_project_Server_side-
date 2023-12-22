@@ -24,12 +24,26 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+    const userCollection = client.db('tastManagement').collection('users')
 
 
 
-
-
+    app.post('/jwt', (req, res) => {
+      try {
+        const user = req.body;
+        const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '150d' });
+        // console.log('token is ------>', token);
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production' ? true : false,
+          sameSite: process.env.NODE_ENV === 'production' ? "none" : "strict"
+        }).send({ success: true, token })
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
 
 
     // Send a ping to confirm a successful connection
