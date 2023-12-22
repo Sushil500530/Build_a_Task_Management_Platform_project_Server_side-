@@ -20,16 +20,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ruakr2a.mongodb.net/?retryWrites=true&w=majority`;
-  
-  // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-  const client = new MongoClient(uri, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    }
-  });
-  
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
 
 
 async function run() {
@@ -55,40 +55,56 @@ async function run() {
         console.log(error);
       }
     })
-
-      // verify token 
-      const verifyToken = async (req, res, next) => {
-        try {
-          const token = req.cookies?.token;
-          // console.log('token is found?-------->', token);
-          if (!token) {
-            return res.status(401).send({ message: 'not authorized access' })
+    // verify token 
+    const verifyToken = async (req, res, next) => {
+      try {
+        const token = req.cookies?.token;
+        // console.log('token is found?-------->', token);
+        if (!token) {
+          return res.status(401).send({ message: 'not authorized access' })
+        }
+        jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (error, decode) => {
+          if (error) {
+            return res.status(401).send({ message: 'unAuthorized access why' })
           }
-          jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (error, decode) => {
-            if (error) {
-              return res.status(401).send({ message: 'unAuthorized access why' })
-            }
-            req.user = decode;
-            next();
-          })
-        }
-        catch (error) {
-          res.status(401).send({ success: false, message: error.message })
-        }
+          req.user = decode;
+          next();
+        })
       }
-  
-      // post method start 
-      app.post('/logout', async (req, res) => {
-        try {
-          const user = req.body;
-          // console.log('log out user is in---->', user);
-          res.clearCookie('token', { maxAge: 0, sameSite: 'none', secure: true }).send({ success: true })
+      catch (error) {
+        res.status(401).send({ success: false, message: error.message })
+      }
+    }
+    // post method start 
+    app.post('/logout', async (req, res) => {
+      try {
+        const user = req.body;
+        // console.log('log out user is in---->', user);
+        res.clearCookie('token', { maxAge: 0, sameSite: 'none', secure: true }).send({ success: true })
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+
+
+    //  front-end api 
+    // post method 
+    app.post('/user', async (req, res) => {
+      try {
+        const userData = req.body;
+        const query = { email: userData?.email };
+        const existedUser = await userCollection.findOne(query);
+        if (existedUser) {
+          return res.send({ message: "user already existed in", insertedId: null })
         }
-        catch (error) {
-          console.log(error);
-        }
-      })
-  
+        const result = await userCollection.insertOne(userData);
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
@@ -106,8 +122,8 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send("Server is Running Now.....")
-  })
-  app.listen(port, () => {
-    console.log(`Server Running on port: ${port}`);
-  })
+  res.send("Server is Running Now.....")
+})
+app.listen(port, () => {
+  console.log(`Server Running on port: ${port}`);
+})
