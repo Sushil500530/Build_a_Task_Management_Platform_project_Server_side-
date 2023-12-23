@@ -199,6 +199,29 @@ async function run() {
         console.log(error);
       }
     })
+    // app.get('/taskData', async (req, res) => {
+    //   try { 
+    //     const result = await taskDataCollection.find().toArray();
+    //     res.send(result);
+    //   }
+    //   catch (error) {
+    //     console.log(error);
+    //   }
+    // })
+    app.get('/taskData/:email', verifyToken,  async (req, res) => {
+      try { 
+        const email = req.params.email;
+        const query = {taskOwnerEmail: email }
+        if (req?.params?.email !== req?.user?.email) {
+            return res.status(403).send({ message: 'forbidden access' })
+        }
+        const result = await taskDataCollection.find(query).toArray();
+        res.send(result);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
 
     app.delete('/favorite/:id', verifyToken, async (req, res) => {
       try {
