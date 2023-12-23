@@ -38,6 +38,7 @@ async function run() {
     // await client.connect();
     const userCollection = client.db('tastManagement').collection('users')
     const taskDataCollection = client.db('tastManagement').collection('taskDatas')
+    const favoriteCollection = client.db('tastManagement').collection('favorites')
 
 
 
@@ -164,6 +165,52 @@ async function run() {
         console.log(error);
       }
     })
+    app.post('/favorite', async (req, res) => {
+      try {
+        const product = req.body;
+        console.log(product);
+        const result = await favoriteCollection.insertOne(product);
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    app.get('/favorite', async (req, res) => {
+      try {
+        const result = await favoriteCollection.find().toArray();
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    app.get('/favorites/:email',verifyToken, async (req, res) => {
+      try { 
+        const email = req.params.email;
+        const query = {fa_Owner: email }
+        if (req?.params?.email !== req?.user?.email) {
+            return res.status(403).send({ message: 'forbidden access' })
+        }
+        const result = await favoriteCollection.find(query).toArray();
+        res.send(result);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+
+    app.delete('/favorite/:id', verifyToken, async (req, res) => {
+      try {
+          const id = req.params.id;
+          const query = { _id: new ObjectId(id) };
+          const result = await favoriteCollection.deleteOne(query);
+          res.send(result);
+      }
+      catch (err) {
+          console.log(err);
+      }
+  })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
