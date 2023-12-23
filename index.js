@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const app = express();
@@ -37,6 +37,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const userCollection = client.db('tastManagement').collection('users')
+    const taskDataCollection = client.db('tastManagement').collection('taskDatas')
 
 
 
@@ -89,7 +90,54 @@ async function run() {
 
 
     //  front-end api 
-    // post method 
+    app.get('/users', async (req, res) => {
+      try {
+        const result = await userCollection.find().toArray();
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    app.get('/task-all', async (req, res) => {
+      try {
+        const result = await taskDataCollection.find().toArray();
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+
+    app.get('/taskDatas', async (req, res) => {
+      try {
+        const filter = req.query;
+       const query = {
+            taskName: {
+                $regex: filter.search,
+                $options: 'i'
+            }
+        };
+        const cursor = taskDataCollection.find(query);
+        const result = await cursor.toArray();
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    app.get('/task-all/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)};
+        const result = await taskDataCollection.findOne(query);
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    // all post method 
     app.post('/user', async (req, res) => {
       try {
         const userData = req.body;
@@ -99,6 +147,17 @@ async function run() {
           return res.send({ message: "user already existed in", insertedId: null })
         }
         const result = await userCollection.insertOne(userData);
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+    app.post('/task-products', async (req, res) => {
+      try {
+        const product = req.body;
+        console.log(product);
+        const result = await taskDataCollection.insertOne(product);
         res.send(result)
       }
       catch (error) {
