@@ -10,8 +10,9 @@ const port = process.env.PORT || 5000;
 // middleware 
 app.use(cors({
   origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
+    "https://task_management.surge.sh",
+    "task_management.surge.sh",
+    "https://sushil-portfollio.surge.sh"
   ],
   credentials: true,
   optionsSuccessStatus: 200,
@@ -39,6 +40,7 @@ async function run() {
     const userCollection = client.db('tastManagement').collection('users')
     const taskDataCollection = client.db('tastManagement').collection('taskDatas')
     const favoriteCollection = client.db('tastManagement').collection('favorites')
+    const dataCollection = client.db('tastManagement').collection('datas')
 
 
 
@@ -100,6 +102,29 @@ async function run() {
         console.log(error);
       }
     })
+    app.get('/datas', async (req, res) => {
+      try {
+        const result = await dataCollection.find().toArray();
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+
+    app.get('/data/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)};
+        const result = await dataCollection.findOne(query);
+        res.send(result)
+      }
+      catch (error) {
+        console.log(error);
+      }
+    })
+
+
     app.get('/task-all', async (req, res) => {
       try {
         const result = await taskDataCollection.find().toArray();
